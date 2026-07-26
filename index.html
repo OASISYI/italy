@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#b5533a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="意大利行程">
+<title>意大利 11 天自驾行程</title>
+<style>
+  :root{
+    --bg:#f6f1e7; --card:#fffdf8; --ink:#2c2620; --muted:#8a7f70;
+    --line:#e7dcc9; --brand:#b5533a; --brand2:#7a8b4f; --gold:#c8912e;
+    --blue:#3f6d8c; --shadow:0 2px 10px rgba(60,40,20,.08);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1b1714; --card:#25201b; --ink:#efe7d9; --muted:#a99d8b;
+      --line:#3a322a; --brand:#e0785c; --brand2:#a2b571; --gold:#e0b452;
+      --blue:#7fb0cf; --shadow:0 2px 12px rgba(0,0,0,.4); }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",Roboto,Helvetica,sans-serif;
+    line-height:1.55; padding-bottom:40px;
+  }
+  a{color:var(--blue);}
+
+  /* Header */
+  header{
+    background:linear-gradient(135deg,var(--brand),#9a4430);
+    color:#fff8ef; padding:16px 16px 12px; position:sticky; top:0; z-index:30;
+    box-shadow:0 2px 8px rgba(0,0,0,.18);
+    padding-top:calc(16px + env(safe-area-inset-top));
+  }
+  .h-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  header h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.3px;}
+  .h-sub{font-size:12.5px;opacity:.9;}
+  .startrow{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;opacity:.95;}
+  .startrow input{
+    border:none;border-radius:8px;padding:3px 7px;font-size:12px;
+    background:rgba(255,255,255,.9);color:#3a2a1e;font-family:inherit;
+  }
+
+  /* Tab pills */
+  nav{
+    position:sticky; top:calc(var(--hh,72px)); z-index:20;
+    background:var(--bg); border-bottom:1px solid var(--line);
+    overflow-x:auto; white-space:nowrap; padding:8px 10px;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{display:none;}
+  .pill{
+    display:inline-block; padding:6px 12px; margin-right:6px; border-radius:999px;
+    background:var(--card); border:1px solid var(--line); color:var(--muted);
+    font-size:13px; cursor:pointer; user-select:none; font-weight:600;
+  }
+  .pill.active{background:var(--brand); color:#fff; border-color:var(--brand);}
+  .pill .dnum{font-size:11px;opacity:.75;}
+
+  main{max-width:640px;margin:0 auto;padding:14px 12px;}
+  section.page{display:none;} section.page.show{display:block;}
+
+  /* Overview */
+  .lead{color:var(--muted);font-size:13.5px;margin:2px 0 14px;}
+  .stats{display:flex;gap:8px;margin-bottom:14px;}
+  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:10px;text-align:center;box-shadow:var(--shadow);}
+  .stat b{display:block;font-size:20px;color:var(--brand);line-height:1.1;}
+  .stat span{font-size:11px;color:var(--muted);}
+
+  .mapwrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:8px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .mapwrap svg{display:block;width:100%;height:auto;}
+
+  .routelist{list-style:none;padding:0;margin:0;}
+  .routelist li{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;
+    border-bottom:1px dashed var(--line);cursor:pointer;}
+  .routelist li:last-child{border-bottom:none;}
+  .rl-num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+  .rl-num.drive{background:var(--brand2);} .rl-num.mtn{background:var(--blue);}
+  .rl-body{flex:1;min-width:0;}
+  .rl-t{font-weight:600;font-size:14.5px;}
+  .rl-d{font-size:12px;color:var(--muted);}
+  .rl-km{font-size:11.5px;color:var(--gold);font-weight:600;white-space:nowrap;}
+
+  /* Day card */
+  .daycard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;}
+  .dc-head{padding:14px 16px;background:linear-gradient(135deg,var(--brand),#9a4430);color:#fff8ef;}
+  .dc-head.drive{background:linear-gradient(135deg,var(--brand2),#5f7040);}
+  .dc-head.mtn{background:linear-gradient(135deg,var(--blue),#2f556e);}
+  .dc-day{font-size:12px;opacity:.9;font-weight:600;letter-spacing:.5px;}
+  .dc-title{font-size:20px;font-weight:700;margin:2px 0 0;}
+  .dc-route{font-size:13px;opacity:.95;margin-top:4px;}
+  .dc-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+  .badge{background:rgba(255,255,255,.22);border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600;}
+
+  .dc-body{padding:6px 16px 16px;}
+  .block{padding:12px 0;border-bottom:1px solid var(--line);}
+  .block:last-child{border-bottom:none;}
+  .blk-h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;
+    color:var(--brand);margin-bottom:7px;text-transform:none;}
+  .blk-h .ic{font-size:15px;}
+  .list{margin:0;padding-left:2px;list-style:none;}
+  .list li{position:relative;padding:3px 0 3px 16px;font-size:14px;}
+  .list li::before{content:"";position:absolute;left:2px;top:11px;width:5px;height:5px;
+    border-radius:50%;background:var(--gold);}
+  .food li::before{background:var(--brand);}
+  .rest-name{font-weight:600;}
+  .rest-note{color:var(--muted);font-size:12.5px;}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;
+    margin-left:6px;vertical-align:middle;background:#e9d9b5;color:#8a6a1e;}
+  @media (prefers-color-scheme: dark){.tag{background:#4a3d1e;color:#e0b452;}}
+
+  .mapbtn{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;
+    text-decoration:none;padding:9px 14px;border-radius:10px;font-size:13.5px;font-weight:600;
+    margin-top:2px;}
+  .mapbtn.mini{background:transparent;color:var(--blue);border:1px solid var(--blue);padding:5px 10px;font-size:12px;}
+
+  /* editable */
+  .edit{display:block;width:100%;background:rgba(200,145,46,.07);border:1px dashed var(--line);
+    border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;color:var(--ink);
+    resize:vertical;min-height:38px;line-height:1.5;}
+  .edit:focus{outline:none;border-color:var(--gold);background:rgba(200,145,46,.12);}
+  .edit::placeholder{color:var(--muted);opacity:.8;}
+  .savehint{font-size:11px;color:var(--muted);margin-top:5px;}
+
+  footer{text-align:center;color:var(--muted);font-size:11.5px;margin:22px 0 6px;padding:0 16px;}
+  .disc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+    font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <h1>🇮🇹 意大利 11 天自驾</h1>
+    <span class="h-sub" id="todayLbl"></span>
+  </div>
+  <div class="h-sub">米兰 · 多洛米蒂 · 托斯卡纳 · 罗马</div>
+  <div class="startrow">
+    <span>出发日期</span>
+    <input type="date" id="startDate">
+    <span id="tripRange"></span>
+  </div>
+</header>
+
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<script>
+/* ---------------- 行程数据 ---------------- */
+const TRIP = [
+  {
+    n:1, type:"city", title:"抵达米兰", route:"米兰 Milano", km:0, drive:"—",
+    place:"Milano（马尔彭萨 MXP / 利纳特 LIN 机场入境）",
+    highlights:[
+      "米兰大教堂 Duomo（可登顶露台看尖塔群，建议网上预约免排队）",
+      "埃马努埃莱二世长廊 Galleria（打卡拱廊与马赛克地面）",
+      "《最后的晚餐》Cenacolo Vinciano —— 必须提前数周订票，看运气",
+      "斯福尔扎城堡 & 森皮奥内公园散步倒时差"
+    ],
+    food:[
+      {n:"Luini",note:"百年 Panzerotti 炸馅饼，站着吃的米兰小吃"},
+      {n:"Trattoria",note:"番红花米兰烩饭 Risotto alla milanese + 米兰炸牛排"},
+    ],
+    car:null,
+    lodging:"米兰住宿（大教堂/中央车站附近，方便）",
+    maps:"Milano Duomo"
+  },
+  {
+    n:2, type:"drive", title:"取车 → 多洛米蒂", route:"米兰 → 奥蒂塞伊 Ortisei", km:285, drive:"约 3.5 小时",
+    place:"瓦尔加迪纳 Val Gardena / 奥蒂塞伊",
+    highlights:[
+      "上午市区取租车，出发前加满油、确认 ETC/Telepass 与雪地胎政策",
+      "一路北上进入白云石山，风景越开越震撼",
+      "傍晚抵达奥蒂塞伊，小镇散步、看山谷日落"
+    ],
+    food:[
+      {n:"南蒂罗尔风味",note:"Speck 烟熏火腿、Canederli 面团子、苹果卷 Strudel"},
+    ],
+    car:"🚗 今天在米兰取车（建议市区/机场店，取车后即上高速）。全程 A22 布伦纳高速为收费路段。",
+    lodging:"奥蒂塞伊 / 瓦尔加迪纳住宿（连住 2 晚，方便玩山）",
+    maps:"Ortisei"
+  },
+  {
+    n:3, type:"mtn", title:"多洛米蒂徒步日", route:"奥蒂塞伊周边", km:40, drive:"短途山路",
+    place:"Seceda · Alpe di Siusi · Val Gardena",
+    highlights:[
+      "Seceda 缆车上山 —— 锯齿状山脊经典机位",
+      "Alpe di Siusi 阿尔卑高山草甸，欧洲最大高山牧场",
+      "Ortisei ↔ Seceda ↔ Furnes 缆车串联，量力选徒步线",
+      "山顶小屋 Rifugio 吃午餐，晒太阳看山"
+    ],
+    food:[
+      {n:"山顶 Rifugio",note:"高山小屋午餐，随便一家风景都值回票价"},
+      {n:"Anna Stuben",note:"想吃好一点可订当地精致餐厅"},
+    ],
+    car:"山区停车场早上易满，缆车站停车要趁早。",
+    lodging:"奥蒂塞伊（同上，第 2 晚）",
+    maps:"Seceda"
+  },
+  {
+    n:4, type:"drive", title:"翻山 → 佛罗伦萨", route:"奥蒂塞伊 → 佛罗伦萨 Firenze", km:360, drive:"约 4 小时",
+    place:"Firenze 佛罗伦萨",
+    highlights:[
+      "上午再看一眼白云石山，之后长途南下",
+      "傍晚抵达佛罗伦萨，米开朗基罗广场看全城日落 + 圣母百花大教堂剪影",
+      "注意：佛罗伦萨老城是 ZTL 限行区，务必停在城外/酒店指定车位"
+    ],
+    food:[
+      {n:"All'Antico Vinaio",note:"排队也值的托斯卡纳大三明治"},
+      {n:"Gelato",note:"老城随便找口碑店，Vivoli / Perchè No!"},
+    ],
+    car:"⚠️ 佛罗伦萨 ZTL 摄像头罚款很狠。进城前查好酒店停车方案，别开进老城。",
+    lodging:"佛罗伦萨住宿（连住 2 晚；选带停车或近停车场）",
+    maps:"Piazzale Michelangelo, Firenze"
+  },
+  {
+    n:5, type:"city", title:"佛罗伦萨艺术日", route:"佛罗伦萨市内", km:0, drive:"步行为主",
+    place:"Firenze",
+    highlights:[
+      "乌菲兹美术馆 Uffizi（波提切利《维纳斯的诞生》，提前订票）",
+      "学院美术馆 Accademia —— 米开朗基罗《大卫》真迹",
+      "圣母百花大教堂 Duomo + 乔托钟楼登顶",
+      "老桥 Ponte Vecchio、皮蒂宫、波波里花园"
+    ],
+    food:[
+      {n:"Trattoria Mario",note:"只做午市，佛罗伦萨大牛排 Bistecca，拼桌"},
+      {n:"Osteria dell'Enoteca",note:"想坐下来慢慢吃的选择"},
+    ],
+    car:"今天车停着不动，纯步行/公交。",
+    lodging:"佛罗伦萨（同上，第 2 晚）",
+    maps:"Galleria degli Uffizi"
+  },
+  {
+    n:6, type:"drive", title:"经基安蒂 → 锡耶纳", route:"佛罗伦萨 → 锡耶纳 Siena", km:75, drive:"约 1.5 小时（走 Chianti 更久）",
+    place:"Siena 锡耶纳",
+    highlights:[
+      "可选走基安蒂 Chianti 酒乡小路，途中酒庄品酒/圣吉米尼亚诺 San Gimignano 塔楼小镇",
+      "锡耶纳坎波广场 Piazza del Campo —— 贝壳形广场",
+      "锡耶纳主教座堂 Duomo，黑白大理石条纹",
+      "曼吉亚塔楼 Torre del Mangia 登顶"
+    ],
+    food:[
+      {n:"Pici 手擀粗面",note:"托斯卡纳南部招牌，配野猪肉酱 al ragù"},
+      {n:"Osteria Le Logge",note:"锡耶纳口碑老馆，建议订位"},
+    ],
+    car:"锡耶纳老城同为 ZTL，停城外 Santa Caterina / Il Campo 停车场步行进城。",
+    lodging:"锡耶纳住宿",
+    maps:"Piazza del Campo, Siena"
+  },
+  {
+    n:7, type:"drive", title:"布鲁内洛 + 奥尔恰谷", route:"锡耶纳 → 蒙塔尔奇诺 → 皮恩扎", km:65, drive:"约 1.5 小时（含游览）",
+    place:"Montalcino · Val d'Orcia · Pienza",
+    highlights:[
+      "蒙塔尔奇诺 Montalcino —— 布鲁内洛 Brunello 顶级红酒，城堡品酒",
+      "圣安蒂莫修道院 Abbazia di Sant'Antimo，罗马式古朴美",
+      "奥尔恰谷 Val d'Orcia 明信片风景：柏树列、起伏麦田",
+      "傍晚抵皮恩扎 Pienza —— 文艺复兴'理想之城'"
+    ],
+    food:[
+      {n:"Taverna Grappolo Blu",note:"蒙塔尔奇诺当地小馆"},
+      {n:"Pecorino di Pienza",note:"皮恩扎羊奶酪之乡，配蜂蜜/梨酱"},
+    ],
+    car:"Val d'Orcia 沿途有多个经典拍照点（如 Podere Belvedere、柏树弯道），可随停。",
+    lodging:"皮恩扎 / 奥尔恰谷住宿（田园 agriturismo 很值）",
+    maps:"Pienza"
+  },
+  {
+    n:8, type:"drive", title:"皮恩扎 → 蒙特普尔恰诺", route:"皮恩扎 → 蒙特普尔恰诺 Montepulciano", km:15, drive:"约 25 分钟",
+    place:"Pienza & Montepulciano",
+    highlights:[
+      "上午逛皮恩扎：主教堂、皮科洛米尼宫、'爱之巷'、买羊奶酪",
+      "下午蒙特普尔恰诺 —— 贵族红酒 Vino Nobile，山城主街一路上坡到大广场",
+      "地下酒窖 Cantina 品酒（Contucci / De' Ricci 等）",
+      "《暮光之城》《英伦情人》取景地"
+    ],
+    food:[
+      {n:"Osteria Acquacheta",note:"⭐ 你想去的这家！招牌佛罗伦萨大牛排 Bistecca，按公斤称重、木桌拼桌。强烈建议提前订位或早去排队", star:true},
+      {n:"Vino Nobile",note:"配一杯蒙特普尔恰诺贵族红酒"},
+    ],
+    car:"两镇都是 ZTL，车停城墙外停车场（Montepulciano 有 P1–P5 沿坡分布）。",
+    lodging:"蒙特普尔恰诺 / 皮恩扎住宿",
+    maps:"Osteria Acquacheta, Montepulciano"
+  },
+  {
+    n:9, type:"drive", title:"天空之城 → 罗马还车", route:"蒙特普尔恰诺 → 奇维塔 → 罗马", km:185, drive:"约 2.5 小时（含游览）",
+    place:"Civita di Bagnoregio → Roma",
+    highlights:[
+      "奇维塔迪巴尼奥雷焦 Civita di Bagnoregio —— '正在死去的城'，步行栈桥进入孤岛古镇",
+      "午后驱车前往罗马，进城前在指定地点还车",
+      "罗马老城 ZTL + 停车噩梦，建议在机场/火车站附近还车，市内靠地铁步行",
+      "傍晚：许愿池 Trevi、西班牙台阶、夜色下的老城"
+    ],
+    food:[
+      {n:"Osteria Al Forno di Agnese",note:"奇维塔岛上小馆，露台看峡谷"},
+      {n:"Roma 第一顿",note:"到罗马吃 Cacio e pepe / Carbonara"},
+    ],
+    car:"🚗 今天还车！还车前拍满油箱与车况照片、留好收据。之后罗马全程不用车。",
+    lodging:"罗马住宿（连住 2 晚；选近地铁站）",
+    maps:"Civita di Bagnoregio"
+  },
+  {
+    n:10, type:"city", title:"永恒之城罗马", route:"罗马市内", km:0, drive:"地铁/步行",
+    place:"Roma",
+    highlights:[
+      "斗兽场 Colosseo + 古罗马广场 Foro Romano + 帕拉蒂尼山（联票，提前订）",
+      "梵蒂冈：圣彼得大教堂 + 梵蒂冈博物馆 & 西斯廷礼拜堂（早订避开长队）",
+      "万神殿 Pantheon、纳沃纳广场、许愿池",
+      "傍晚台伯河、特拉斯提弗列 Trastevere 老城区吃晚饭"
+    ],
+    food:[
+      {n:"Roscioli",note:"名店，Carbonara / Cacio e pepe，务必订位"},
+      {n:"Da Enzo al 29",note:"Trastevere 罗马菜小馆，常排队"},
+      {n:"Gelato",note:"Giolitti / Fatamorgana"},
+    ],
+    car:"无车日，买地铁/公交票或走路。",
+    lodging:"罗马（同上，第 2 晚）",
+    maps:"Colosseo, Roma"
+  },
+  {
+    n:11, type:"city", title:"罗马 → 米兰，返程", route:"罗马 → 米兰 Milano", km:0, drive:"高铁约 3 小时",
+    place:"Roma → Milano",
+    highlights:[
+      "上午罗马查漏补缺 / 采购手信",
+      "Roma Termini 乘 Frecciarossa / Italo 高铁直达米兰（约 3 小时，建议提前购票选早班）",
+      "抵米兰接驳机场，或在米兰再留一晚看你航班",
+      "行程收尾 🍷"
+    ],
+    food:[
+      {n:"车站/机场",note:"高铁上或米兰机场简餐收尾"},
+    ],
+    car:null,
+    lodging:"视返程航班：米兰机场酒店 或 直接离境",
+    maps:"Roma Termini"
+  },
+];
+
+/* 全景地图坐标（按经纬度换算） */
+const MAPPTS = [
+  {n:1,x:80,y:141,lbl:"米兰",side:"L"},
+  {n:2,x:223,y:68,lbl:"奥蒂塞伊",side:"R"},
+  {n:4,x:199,y:251,lbl:"佛罗伦萨",side:"L"},
+  {n:6,x:204,y:281,lbl:"锡耶纳",side:"L"},
+  {n:7,x:213,y:298,lbl:"蒙塔尔奇诺",side:"L"},
+  {n:7.5,x:224,y:297,lbl:"皮恩扎",side:"R"},
+  {n:8,x:232,y:293,lbl:"蒙特普尔恰诺",side:"R"},
+  {n:9,x:249,y:326,lbl:"奇维塔",side:"R"},
+  {n:9.5,x:271,y:374,lbl:"罗马",side:"L"},
+];
+
+/* ---------------- 渲染 ---------------- */
+const $ = s=>document.querySelector(s);
+const nav=$("#nav"), main=$("#main");
+const typeCls={city:"",drive:"drive",mtn:"mtn"};
+const typeLabel={city:"城市",drive:"驱车",mtn:"山区"};
+
+/* 概览页 */
+function overviewHTML(){
+  const totalKm=TRIP.reduce((a,d)=>a+(d.km||0),0);
+  let pts=MAPPTS.map(p=>`${p.x},${p.y}`).join(" ");
+  let dots=MAPPTS.map(p=>{
+    const tx = p.side==="L" ? p.x-8 : p.x+8;
+    const anc = p.side==="L" ? "end" : "start";
+    return `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#b5533a" stroke="#fffdf8" stroke-width="1.5"/>
+      <text x="${tx}" y="${p.y+3.5}" font-size="11" fill="var(--ink)" text-anchor="${anc}" font-weight="600">${p.lbl}</text>`;
+  }).join("");
+  let li = TRIP.map(d=>{
+    const cls = d.type==="drive"?"drive":d.type==="mtn"?"mtn":"";
+    const km = d.km>0?`${d.km} km`:(d.n===11?"高铁":"市内");
+    return `<li onclick="go(${d.n})">
+      <div class="rl-num ${cls}">${d.n}</div>
+      <div class="rl-body">
+        <div class="rl-t">${d.title}</div>
+        <div class="rl-d">${d.route}</div>
+      </div>
+      <div class="rl-km">${km}</div>
+    </li>`;
+  }).join("");
+  return `
+    <p class="lead">你已定下的 11 天路线：米兰 → 多洛米蒂 → 佛罗伦萨 → 托斯卡纳酒乡 → 罗马 → 米兰。点任意一天看详情，出行当天页面会自动高亮。</p>
+    <div class="stats">
+      <div class="stat"><b>11</b><span>天</span></div>
+      <div class="stat"><b>9</b><span>座城镇</span></div>
+      <div class="stat"><b>~${(totalKm/10).toFixed(0)*10}</b><span>公里自驾</span></div>
+    </div>
+    <div class="mapwrap">
+      <svg viewBox="0 0 340 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="路线全景图">
+        <polyline points="${pts}" fill="none" stroke="#c8912e" stroke-width="2.5"
+          stroke-linejoin="round" stroke-dasharray="1 0" opacity="0.85"/>
+        ${dots}
+        <text x="170" y="418" font-size="10" fill="var(--muted)" text-anchor="middle">按真实相对位置绘制 · 点上方列表看每日详情</text>
+      </svg>
+    </div>
+    <ul class="routelist">${li}</ul>
+    <div class="disc">
+      内容为行程规划参考：景点、餐厅、公里数为按路线整理的建议与估算，具体订位/营业时间/ZTL 规则请以官方为准。<br>
+      酒店、租车确认号、订位信息等由你在各天页面填写，保存在本机浏览器（localStorage），不上传。
+    </div>`;
+}
+
+/* 单日页 */
+function dayHTML(d){
+  const cls=typeCls[d.type];
+  const kmBadge = d.km>0?`<span class="badge">🛣️ ${d.km} km</span>`:"";
+  const driveBadge = d.drive&&d.drive!=="—"?`<span class="badge">⏱️ ${d.drive}</span>`:"";
+  const dateBadge = `<span class="badge" data-datebadge="${d.n}">📅 —</span>`;
+  const hi = d.highlights.map(h=>`<li>${h}</li>`).join("");
+  const food = d.food.map(f=>`<li><span class="rest-name">${f.n}</span>${f.star?'<span class="tag">想去</span>':''}<br><span class="rest-note">${f.note}</span></li>`).join("");
+  const carBlock = d.car?`
+    <div class="block">
+      <div class="blk-h"><span class="ic">🚗</span>租车提示</div>
+      <div style="font-size:13.5px">${d.car}</div>
+      <textarea class="edit" data-key="car-${d.n}" placeholder="租车公司 / 门店 / 取还时间 / 确认号…" style="margin-top:8px"></textarea>
+    </div>`:"";
+  return `
+  <div class="daycard">
+    <div class="dc-head ${cls}">
+      <div class="dc-day">DAY ${d.n} · ${typeLabel[d.type]}</div>
+      <div class="dc-title">${d.title}</div>
+      <div class="dc-route">📍 ${d.route}</div>
+      <div class="dc-badges">${dateBadge}${kmBadge}${driveBadge}</div>
+    </div>
+    <div class="dc-body">
+      <div class="block">
+        <a class="mapbtn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.maps)}" target="_blank" rel="noopener">🗺️ 在 Google 地图打开</a>
+      </div>
+      <div class="block">
+        <div class="blk-h"><span class="ic">✨</span>今日安排</div>
+        <ul class="list">${hi}</ul>
+      </div>
+      <div class="block">
+        <div class="blk-h"><span class="ic">🍝</span>想吃 / 餐厅</div>
+        <ul class="list food">${food}</ul>
+        <textarea class="edit" data-key="food-${d.n}" placeholder="订位记录 / 你想加的餐厅…" style="margin-top:6px"></textarea>
+      </div>
+      <div class="block">
+        <div class="blk-h"><span class="ic">🏨</span>住宿</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">${d.lodging}</div>
+        <textarea class="edit" data-key="lodging-${d.n}" placeholder="酒店名 / 地址 / 入住时间 / 订单号…"></textarea>
+      </div>
+      ${carBlock}
+      <div class="block">
+        <div class="blk-h"><span class="ic">📝</span>我的备注</div>
+        <textarea class="edit" data-key="note-${d.n}" placeholder="随手记：门票、集合时间、停车场、待办…"></textarea>
+        <div class="savehint">✓ 自动保存到本机</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* 构建导航与页面 */
+function build(){
+  let pills=`<span class="pill" data-tab="ov" onclick="go('ov')">概览</span>`;
+  let pages=`<section class="page" id="pg-ov">${overviewHTML()}</section>`;
+  TRIP.forEach(d=>{
+    pills+=`<span class="pill" data-tab="${d.n}" onclick="go(${d.n})"><span class="dnum">D${d.n}</span> ${d.title.replace(/^.*?→\s*/,'').slice(0,5)}</span>`;
+    pages+=`<section class="page" id="pg-${d.n}">${dayHTML(d)}</section>`;
+  });
+  nav.innerHTML=pills; main.innerHTML=pages;
+  bindEdits(); applyDates();
+}
+
+let current="ov";
+function go(tab){
+  current=String(tab);
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("show"));
+  const pg=$("#pg-"+tab); if(pg)pg.classList.add("show");
+  document.querySelectorAll(".pill").forEach(p=>p.classList.toggle("active",p.dataset.tab===String(tab)));
+  const ap=document.querySelector(`.pill[data-tab="${tab}"]`);
+  if(ap)ap.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"});
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+window.go=go;
+
+/* 编辑保存 */
+function bindEdits(){
+  document.querySelectorAll(".edit").forEach(el=>{
+    const k=el.dataset.key;
+    el.value=localStorage.getItem("it_"+k)||"";
+    autresize(el);
+    el.addEventListener("input",()=>{localStorage.setItem("it_"+k,el.value);autresize(el);});
+  });
+}
+function autresize(el){el.style.height="auto";el.style.height=(el.scrollHeight+2)+"px";}
+
+/* 日期计算 */
+const startEl=$("#startDate");
+function fmt(dt){return `${dt.getMonth()+1}月${dt.getDate()}日 周${"日一二三四五六"[dt.getDay()]}`;}
+function applyDates(){
+  const s=localStorage.getItem("it_start");
+  if(s)startEl.value=s;
+  const val=startEl.value;
+  const rangeEl=$("#tripRange"), todayLbl=$("#todayLbl");
+  if(!val){ rangeEl.textContent=""; document.querySelectorAll("[data-datebadge]").forEach(b=>b.textContent="📅 未设日期"); todayLbl.textContent=""; return;}
+  const start=new Date(val+"T00:00:00");
+  const end=new Date(start); end.setDate(end.getDate()+10);
+  rangeEl.textContent=`→ ${fmt(end)}`;
+  // 每天日期
+  document.querySelectorAll("[data-datebadge]").forEach(b=>{
+    const n=+b.dataset.datebadge; const dt=new Date(start); dt.setDate(dt.getDate()+n-1);
+    b.textContent="📅 "+fmt(dt);
+  });
+  // 今天高亮
+  const now=new Date(); now.setHours(0,0,0,0);
+  const diff=Math.round((now-start)/86400000);
+  document.querySelectorAll(".pill").forEach(p=>p.style.boxShadow="");
+  if(diff>=0&&diff<=10){
+    const dnum=diff+1;
+    todayLbl.textContent=`今天 · Day ${dnum}`;
+    const tp=document.querySelector(`.pill[data-tab="${dnum}"]`);
+    if(tp)tp.style.boxShadow="0 0 0 2px var(--gold)";
+  } else if(diff<0){
+    todayLbl.textContent=`还有 ${-diff} 天出发`;
+  } else {
+    todayLbl.textContent="旅途愉快 🍷";
+  }
+}
+startEl.addEventListener("change",()=>{localStorage.setItem("it_start",startEl.value);applyDates();});
+
+/* 让 header 高度参与 sticky 定位 */
+function setHH(){document.documentElement.style.setProperty("--hh",document.querySelector("header").offsetHeight+"px");}
+
+build();
+go("ov");
+setHH(); window.addEventListener("resize",setHH);
+
+/* 首次进入若已过出发日则跳到今天 */
+(function jumpToday(){
+  const s=localStorage.getItem("it_start"); if(!s)return;
+  const start=new Date(s+"T00:00:00"); const now=new Date(); now.setHours(0,0,0,0);
+  const diff=Math.round((now-start)/86400000);
+  if(diff>=0&&diff<=10) go(diff+1);
+})();
+</script>
+<footer>行程管理小工具 · 本地保存 · 手机添加到主屏幕即可离线翻阅</footer>
+
+<div id="updBar" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:99;
+  background:var(--brand);color:#fff;padding:11px 14px;font-size:13.5px;text-align:center;
+  box-shadow:0 -2px 10px rgba(0,0,0,.2)">
+  行程有更新 <b onclick="location.reload()" style="text-decoration:underline;cursor:pointer;margin-left:8px">点此刷新</b>
+</div>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      reg.addEventListener("updatefound",()=>{
+        const nw=reg.installing;
+        nw&&nw.addEventListener("statechange",()=>{
+          if(nw.state==="installed"&&navigator.serviceWorker.controller){
+            document.getElementById("updBar").style.display="block";
+          }
+        });
+      });
+    }).catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
