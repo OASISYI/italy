@@ -132,6 +132,18 @@
   .edit::placeholder{color:var(--muted);opacity:.8;}
   .savehint{font-size:11px;color:var(--muted);margin-top:5px;}
 
+  .ckhead{display:flex;justify-content:space-between;align-items:center;font-weight:700;
+    color:var(--brand);margin:2px 0 10px;font-size:15px;}
+  .ckhead b{font-size:12.5px;color:var(--muted);font-weight:600;}
+  .cklist{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px;}
+  .ckitem{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .ckitem:last-child{border-bottom:none;}
+  .ckbox{width:20px;height:20px;margin-top:2px;accent-color:var(--brand2);flex:0 0 auto;}
+  .ck-b{display:flex;flex-direction:column;}
+  .ck-t{font-size:14.5px;font-weight:600;}
+  .ck-d{font-size:12.5px;color:var(--muted);}
+  .ckbox:checked ~ .ck-b .ck-t{text-decoration:line-through;color:var(--muted);}
   footer{text-align:center;color:var(--muted);font-size:11.5px;margin:22px 0 6px;padding:0 16px;}
   .disc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
     font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;}
@@ -356,6 +368,34 @@ const MAPPTS = [
   {n:9.5,x:271,y:374,lbl:"罗马",side:"L"},
 ];
 
+/* 驾车路段：origin→destination（+途经点），用于 Google 地图导航路线 */
+const LEGS = {
+  2:{from:"Milano", to:"Ortisei, BZ"},
+  4:{from:"Ortisei, BZ", to:"Firenze"},
+  6:{from:"Firenze", to:"Siena"},
+  7:{from:"Siena", to:"Pienza, SI", via:"Montalcino"},
+  8:{from:"Pienza, SI", to:"Montepulciano"},
+  9:{from:"Montepulciano", to:"Roma", via:"Civita di Bagnoregio"},
+};
+
+/* 出发前预订清单 */
+const CHECKLIST = [
+  {t:"🎫《最后的晚餐》门票", d:"米兰 · 需提前数周官网/授权代理，名额极少（不看可跳过）"},
+  {t:"🏛️ 乌菲兹美术馆门票", d:"佛罗伦萨 · 选好时段，注意周一可能闭馆"},
+  {t:"🗿 学院美术馆(大卫)门票", d:"佛罗伦萨 · 提前订，注意周一可能闭馆"},
+  {t:"⛪ 梵蒂冈博物馆 + 西斯廷", d:"罗马 · 订早场避长队"},
+  {t:"🏟️ 斗兽场 + 古罗马广场联票", d:"罗马 · 提前订指定入场时段"},
+  {t:"🍖 Osteria Acquacheta 订位", d:"蒙特普尔恰诺 Day8 · 大牛排热门，电话订或到店排队"},
+  {t:"🚄 罗马→米兰高铁票", d:"Day11 · Frecciarossa / Italo，早订更便宜"},
+  {t:"🚗 租车预订", d:"确认取还点、异地还车费、保险、燃油政策"},
+  {t:"🪪 国际驾照 IDP", d:"非欧盟公民在意租车/被查必备，出发前办好"},
+  {t:"📱 下载 Google 离线地图", d:"米兰 / 多洛米蒂 / 托斯卡纳 / 罗马 各区离线包"},
+  {t:"🏨 各晚酒店确认", d:"记地址、入住时间、订单号、是否含停车"},
+  {t:"🅿️ ZTL 城镇停车方案", d:"佛/锡耶纳/山城/罗马 记好城墙外停车场"},
+  {t:"🚠 多洛米蒂缆车/停车", d:"Seceda 等旺季早到，查运营时间"},
+  {t:"🧾 保险 + 境外可用卡/现金", d:"旅行保险、能在境外刷的卡、少量现金"},
+];
+
 /* ---------------- 渲染 ---------------- */
 const $ = s=>document.querySelector(s);
 const nav=$("#nav"), main=$("#main");
@@ -409,6 +449,16 @@ function overviewHTML(){
 /* 单日页 */
 function dayHTML(d){
   const cls=typeCls[d.type];
+  const leg=LEGS[d.n];
+  let mapBtn;
+  if(leg){
+    let u="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(leg.from)+"&destination="+encodeURIComponent(leg.to)+"&travelmode=driving";
+    if(leg.via)u+="&waypoints="+encodeURIComponent(leg.via);
+    const via=leg.via?` 经 ${leg.via}`:"";
+    mapBtn=`<a class="mapbtn" href="${u}" target="_blank" rel="noopener">🗺️ 驾车路线${via}（距离·时间·导航）</a>`;
+  } else {
+    mapBtn=`<a class="mapbtn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.maps)}" target="_blank" rel="noopener">🗺️ 在 Google 地图打开</a>`;
+  }
   const kmBadge = d.km>0?`<span class="badge">🛣️ ${d.km} km</span>`:"";
   const driveBadge = d.drive&&d.drive!=="—"?`<span class="badge">⏱️ ${d.drive}</span>`:"";
   const dateBadge = `<span class="badge" data-datebadge="${d.n}">📅 —</span>`;
@@ -430,7 +480,7 @@ function dayHTML(d){
     </div>
     <div class="dc-body">
       <div class="block">
-        <a class="mapbtn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.maps)}" target="_blank" rel="noopener">🗺️ 在 Google 地图打开</a>
+        ${mapBtn}
       </div>
       <div class="block">
         <div class="blk-h"><span class="ic">✨</span>今日安排</div>
@@ -456,16 +506,99 @@ function dayHTML(d){
   </div>`;
 }
 
+/* 出发前预订清单页 */
+function checklistHTML(){
+  const items=CHECKLIST.map((c,i)=>`
+    <label class="ckitem">
+      <input type="checkbox" class="ckbox" data-key="ck-${i}">
+      <span class="ck-b"><span class="ck-t">${c.t}</span><span class="ck-d">${c.d}</span></span>
+    </label>`).join("");
+  return `
+    <p class="lead">这条线一半的东西要提前订，到场再订基本没戏。出发前逐项勾掉，进度存本机。</p>
+    <div class="ckhead"><span>📋 出发前预订清单</span><b id="ckCount"></b></div>
+    <div class="cklist">${items}</div>
+    <div class="disc">勾选状态保存在本机浏览器，不上传。具体票务/开放时间以官方渠道为准。</div>`;
+}
+
+/* 实用信息页 */
+function practicalHTML(){
+  return `
+  <div class="daycard">
+    <div class="dc-head">
+      <div class="dc-title" style="font-size:19px">ℹ️ 实用信息</div>
+      <div class="dc-route">意大利自驾速查</div>
+    </div>
+    <div class="dc-body">
+      <div class="block"><div class="blk-h"><span class="ic">🚗</span>租车取还</div>
+        <ul class="list">
+          <li>Day2 米兰取车；Day9 一进罗马就还（罗马 ZTL + 停车贵）</li>
+          <li>还车前拍满油箱与车身照片、留好收据</li>
+          <li>确认异地还车费、过路费/Telepass、雪地胎/雪链政策</li>
+        </ul>
+        <textarea class="edit" data-key="pi-rental" placeholder="租车公司 / 取车店 / 还车店 / 道路救援电话…"></textarea>
+      </div>
+      <div class="block"><div class="blk-h"><span class="ic">☎️</span>紧急电话</div>
+        <ul class="list">
+          <li><b>112</b> 欧盟通用急救/警察（可英语）</li>
+          <li>113 警察 · 118 医疗急救 · 115 消防 · 116 道路救援</li>
+        </ul>
+        <textarea class="edit" data-key="pi-emerg" placeholder="保险 24h 电话 / 租车救援 / 使领馆…"></textarea>
+      </div>
+      <div class="block"><div class="blk-h"><span class="ic">🚦</span>ZTL 限行</div>
+        <ul class="list">
+          <li>历史城区限行区，摄像头自动抓拍，罚单几个月后寄到、很贵</li>
+          <li>佛罗伦萨 / 锡耶纳 / 山城 / 罗马老城都是 ZTL — 一律停城外步行进</li>
+          <li>酒店若在 ZTL 内，可让前台报车牌申请豁免，务必提前确认</li>
+        </ul>
+      </div>
+      <div class="block"><div class="blk-h"><span class="ic">🛣️</span>高速 · 加油</div>
+        <ul class="list">
+          <li>Autostrada 收费：入口取卡、出口付（现金/卡/Telepass 道分开）</li>
+          <li>加油 Self（自助便宜）/ Servito（有人服务贵）</li>
+          <li>柴油 = Diesel / Gasolio，汽油 = Benzina — 别加错油！</li>
+        </ul>
+      </div>
+      <div class="block"><div class="blk-h"><span class="ic">🏛️</span>开馆 · 生活</div>
+        <ul class="list">
+          <li>很多博物馆周一闭馆（乌菲兹、学院周一闭）— 按你实际日期核对</li>
+          <li>餐厅常收 coperto 餐位费；小费非必须</li>
+          <li>路边停车：蓝线收费 / 白线免费 / 黄线禁停</li>
+          <li>自来水多数可直饮；插座欧标 Type F/L，带转换头</li>
+        </ul>
+      </div>
+    </div>
+  </div>`;
+}
+
 /* 构建导航与页面 */
 function build(){
   let pills=`<span class="pill" data-tab="ov" onclick="go('ov')">概览</span>`;
+  pills+=`<span class="pill" data-tab="ck" onclick="go('ck')">📋 预订</span>`;
+  pills+=`<span class="pill" data-tab="pi" onclick="go('pi')">ℹ️ 实用</span>`;
   let pages=`<section class="page" id="pg-ov">${overviewHTML()}</section>`;
+  pages+=`<section class="page" id="pg-ck">${checklistHTML()}</section>`;
+  pages+=`<section class="page" id="pg-pi">${practicalHTML()}</section>`;
   TRIP.forEach(d=>{
     pills+=`<span class="pill" data-tab="${d.n}" onclick="go(${d.n})"><span class="dnum">D${d.n}</span> ${d.title.replace(/^.*?→\s*/,'').slice(0,5)}</span>`;
     pages+=`<section class="page" id="pg-${d.n}">${dayHTML(d)}</section>`;
   });
   nav.innerHTML=pills; main.innerHTML=pages;
-  bindEdits(); applyDates();
+  bindEdits(); bindChecks(); applyDates();
+}
+
+/* 清单勾选保存 */
+function bindChecks(){
+  document.querySelectorAll(".ckbox").forEach(el=>{
+    const k=el.dataset.key;
+    el.checked=localStorage.getItem("it_"+k)==="1";
+    el.addEventListener("change",()=>{localStorage.setItem("it_"+k,el.checked?"1":"");updCkCount();});
+  });
+  updCkCount();
+}
+function updCkCount(){
+  const all=document.querySelectorAll(".ckbox"); if(!all.length)return;
+  const done=[...all].filter(c=>c.checked).length;
+  const el=document.getElementById("ckCount"); if(el)el.textContent=`已完成 ${done} / ${all.length}`;
 }
 
 let current="ov";
