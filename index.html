@@ -144,6 +144,14 @@
   .ck-t{font-size:14.5px;font-weight:600;}
   .ck-d{font-size:12.5px;color:var(--muted);}
   .ckbox:checked ~ .ck-b .ck-t{text-decoration:line-through;color:var(--muted);}
+  .spots{display:flex;flex-wrap:wrap;gap:7px;}
+  .spot{display:inline-flex;align-items:center;gap:4px;background:rgba(63,109,140,.10);
+    border:1px solid var(--line);color:var(--blue);text-decoration:none;
+    padding:6px 11px;border-radius:999px;font-size:13px;font-weight:600;}
+  .spot::before{content:"📍";font-size:11px;}
+  .spot:active{background:rgba(63,109,140,.22);}
+  .rest-link{color:var(--blue);text-decoration:none;font-weight:600;border-bottom:1px dashed var(--blue);}
+  .rl-map{flex:0 0 auto;color:var(--blue);text-decoration:none;font-size:17px;padding:2px 4px;align-self:center;}
   footer{text-align:center;color:var(--muted);font-size:11.5px;margin:22px 0 6px;padding:0 16px;}
   .disc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
     font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;}
@@ -396,11 +404,29 @@ const CHECKLIST = [
   {t:"🧾 保险 + 境外可用卡/现金", d:"旅行保险、能在境外刷的卡、少量现金"},
 ];
 
+/* 每天可一键跳转地图的地点（n=显示名, q=地图搜索词） */
+const SPOTS = {
+  1:[{n:"米兰大教堂",q:"Duomo di Milano"},{n:"埃马努埃莱二世长廊",q:"Galleria Vittorio Emanuele II Milano"},{n:"《最后的晚餐》",q:"Santa Maria delle Grazie Milano"},{n:"斯福尔扎城堡",q:"Castello Sforzesco Milano"}],
+  2:[{n:"奥蒂塞伊",q:"Ortisei"},{n:"瓦尔加迪纳",q:"Val Gardena"}],
+  3:[{n:"Seceda 缆车",q:"Seceda cable car Ortisei"},{n:"Alpe di Siusi",q:"Alpe di Siusi"},{n:"Val Gardena",q:"Val Gardena"}],
+  4:[{n:"米开朗基罗广场",q:"Piazzale Michelangelo Firenze"},{n:"圣母百花大教堂",q:"Cattedrale Santa Maria del Fiore Firenze"}],
+  5:[{n:"乌菲兹美术馆",q:"Galleria degli Uffizi"},{n:"学院美术馆(大卫)",q:"Galleria dell'Accademia Firenze"},{n:"圣母百花大教堂",q:"Duomo di Firenze"},{n:"老桥",q:"Ponte Vecchio Firenze"},{n:"皮蒂宫",q:"Palazzo Pitti"}],
+  6:[{n:"坎波广场",q:"Piazza del Campo Siena"},{n:"锡耶纳大教堂",q:"Duomo di Siena"},{n:"曼吉亚塔楼",q:"Torre del Mangia Siena"},{n:"圣吉米尼亚诺",q:"San Gimignano"}],
+  7:[{n:"蒙塔尔奇诺城堡",q:"Fortezza di Montalcino"},{n:"圣安蒂莫修道院",q:"Abbazia di Sant'Antimo"},{n:"奥尔恰谷观景",q:"Val d'Orcia"},{n:"皮恩扎",q:"Pienza"}],
+  8:[{n:"皮恩扎主教堂",q:"Duomo di Pienza"},{n:"皮科洛米尼宫",q:"Palazzo Piccolomini Pienza"},{n:"蒙特普尔恰诺大广场",q:"Piazza Grande Montepulciano"}],
+  9:[{n:"奇维塔(天空之城)",q:"Civita di Bagnoregio"},{n:"许愿池",q:"Fontana di Trevi Roma"},{n:"西班牙台阶",q:"Piazza di Spagna Roma"}],
+  10:[{n:"斗兽场",q:"Colosseo Roma"},{n:"古罗马广场",q:"Foro Romano"},{n:"圣彼得大教堂",q:"Basilica di San Pietro"},{n:"梵蒂冈博物馆",q:"Musei Vaticani"},{n:"万神殿",q:"Pantheon Roma"},{n:"特拉斯提弗列",q:"Trastevere Roma"}],
+  11:[{n:"罗马 Termini 车站",q:"Roma Termini"}],
+};
+/* 餐厅搜索的城市提示，用于消歧 */
+const FOODHINT = {1:"Milano",2:"Ortisei",3:"Val Gardena",4:"Firenze",5:"Firenze",6:"Siena",7:"Pienza",8:"Montepulciano",9:"Roma",10:"Roma",11:"Milano"};
+
 /* ---------------- 渲染 ---------------- */
 const $ = s=>document.querySelector(s);
 const nav=$("#nav"), main=$("#main");
 const typeCls={city:"",drive:"drive",mtn:"mtn"};
 const typeLabel={city:"城市",drive:"驱车",mtn:"山区"};
+const mq=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);
 
 /* 概览页 */
 function overviewHTML(){
@@ -422,6 +448,7 @@ function overviewHTML(){
         <div class="rl-d">${d.route}</div>
       </div>
       <div class="rl-km">${km}</div>
+      <a class="rl-map" href="${mq(d.maps)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="在地图打开">🗺️</a>
     </li>`;
   }).join("");
   return `
@@ -463,7 +490,14 @@ function dayHTML(d){
   const driveBadge = d.drive&&d.drive!=="—"?`<span class="badge">⏱️ ${d.drive}</span>`:"";
   const dateBadge = `<span class="badge" data-datebadge="${d.n}">📅 —</span>`;
   const hi = d.highlights.map(h=>`<li>${h}</li>`).join("");
-  const food = d.food.map(f=>`<li><span class="rest-name">${f.n}</span>${f.star?'<span class="tag">想去</span>':''}<br><span class="rest-note">${f.note}</span></li>`).join("");
+  const hint = FOODHINT[d.n]||"";
+  const food = d.food.map(f=>`<li><a class="rest-link" href="${mq(f.n+' '+hint)}" target="_blank" rel="noopener">${f.n}</a>${f.star?'<span class="tag">想去</span>':''}<br><span class="rest-note">${f.note}</span></li>`).join("");
+  const spotsArr = SPOTS[d.n]||[];
+  const spotsBlk = spotsArr.length?`
+      <div class="block">
+        <div class="blk-h"><span class="ic">📍</span>地点导航 · 点一下跳地图</div>
+        <div class="spots">${spotsArr.map(s=>`<a class="spot" href="${mq(s.q||s.n)}" target="_blank" rel="noopener">${s.n}</a>`).join("")}</div>
+      </div>`:"";
   const carBlock = d.car?`
     <div class="block">
       <div class="blk-h"><span class="ic">🚗</span>租车提示</div>
@@ -482,6 +516,7 @@ function dayHTML(d){
       <div class="block">
         ${mapBtn}
       </div>
+      ${spotsBlk}
       <div class="block">
         <div class="blk-h"><span class="ic">✨</span>今日安排</div>
         <ul class="list">${hi}</ul>
